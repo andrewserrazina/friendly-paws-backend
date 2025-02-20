@@ -1,6 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+from passlib.context import CryptContext
+from sqlalchemy.orm import Session
+from fastapi import Depends, HTTPException
 from pydantic import BaseModel
 from typing import List
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
@@ -15,6 +18,8 @@ DATABASE_URL = "sqlite:///./petsitting.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Secret Key for JWT
 SECRET_KEY = "your_secret_key"
@@ -210,3 +215,11 @@ def delete_booking(booking_id: int, db: Session = Depends(get_db)):
     db.delete(booking)
     db.commit()
     return {"message": "Booking deleted successfully"}
+
+@app.post("/register/")
+def register_user(username: str, password: str, db: Session = Depends(get_db)):
+    hashed_password = pwd_context.hash(password)
+    db_user = User(username=username, hashed_password=hashed_password)
+    db.add(db_user)
+    db.commit()
+    return {"message": "User registered successfully"}
