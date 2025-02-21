@@ -162,3 +162,10 @@ def create_booking(booking: BookingCreate, db: SessionLocal = Depends(get_db)):
     db.commit()
     db.refresh(db_booking)
     return db_booking
+
+@app.get("/clients/{client_id}")
+def get_client(client_id: int, db: Session = Depends(get_db)):
+    client = db.query(Client).filter(Client.id == client_id).first()
+    if not client:
+        raise HTTPException(status_code=404, detail="Client not found")
+    return client
